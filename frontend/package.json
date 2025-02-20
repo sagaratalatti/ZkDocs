@@ -13,6 +13,7 @@
     "@reown/appkit-adapter-ethers": "^1.6.8",
     "dotenv": "^16.4.7",
     "ethers": "^6.9.2",
+    "merkletreejs": "^0.4.1",
     "next": "^13.4.0",
     "next-themes": "^0.4.4",
     "qr-code-styling": "^1.9.1",
@@ -23,6 +24,7 @@
     "zksync-ethers": "^6.0.0"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^17.0.31",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.3",

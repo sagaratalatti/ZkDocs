@@ -1,14 +1,83 @@
 import { useState } from "react";
-import { ethers } from "ethers";
+import { ethers, keccak256 } from "ethers";
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react' // Import ReOwn AppKit Wallet Hook
 import { toast } from "react-toastify";
+import { MerkleTree } from "merkletreejs";
+import CryptoJS from "crypto-js";
 
 const StoreDocument = () => {
     const account = useAppKitAccount(); // Access ReOwn wallet
     const { walletProvider } = useAppKitProvider('eip155')
     const [docHash, setDocHash] = useState("");
-    const [signature, setSignature] = useState("");
     const [merkleRoot, setMerkleRoot] = useState("");
+    const [keyShares, setKeyShares] = useState<string[]>([]);
+    const [partialSignatures, setPartialSignatures] = useState<string[]>([]);
+    const [tssSignature, setTssSignature] = useState("");
+
+
+    // Step 1: Generate TSS Key Shares
+    const generateKeyShares = () => {
+        if (!docHash) {
+            toast.error("⚠️ Enter document hash before generating key shares.");
+            return;
+        }
+
+        let shares: string[] = [];
+        for (let i = 0; i < 3; i++) {
+            shares.push(CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex));
+        }
+
+        setKeyShares(shares);
+        toast.success("✅ Key Shares Generated!");
+    };
+
+    // Step 2: Generate Partial Signatures
+    const generatePartialSignatures = () => {
+        if (keyShares.length === 0) {
+            toast.error("⚠️ Generate key shares first.");
+            return;
+        }
+
+        let signatures: string[] = keyShares.map(share =>
+            ethers.keccak256(ethers.toUtf8Bytes(share + docHash))
+        );
+
+        setPartialSignatures(signatures);
+        toast.success("✅ Partial Signatures Generated!");
+    };
+
+    // Step 3: Aggregate into a TSS Signature
+    const generateTSSSignature = () => {
+        if (partialSignatures.length === 0) {
+            toast.error("⚠️ Generate partial signatures first.");
+            return;
+        }
+
+        const aggregatedSignature = ethers.keccak256(
+            ethers.toUtf8Bytes(partialSignatures.join(""))
+        );
+        setTssSignature(aggregatedSignature);
+        toast.success("✅ Final TSS Signature Generated!");
+    };
+
+    // Step 4: Generate Merkle Root
+    const generateMerkleRoot = () => {
+        if (!docHash) {
+            toast.error("⚠️ Enter document hash before generating Merkle root.");
+            return;
+        }
+
+        const GovernmentAddress = "0x3124475af0ba367fFf33a5DC9BcE78c41f493713";
+        const UniversityAddress = "0xaD1beE8B474644bA41736B6c513f55D800E04e78"
+        const NotaryAddress = "0x78D60191E7EA8FD24196227602CF166e90B98988"
+
+        const attestors = [GovernmentAddress, UniversityAddress, NotaryAddress];
+        const leaves = attestors.map(addr => keccak256(ethers.toUtf8Bytes(addr)));
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const root = "0x" + tree.getRoot().toString("hex");
+        setMerkleRoot(root);
+        toast.success("✅ Merkle Root Generated!");
+    };
 
     const storeDocument = async () => {
         if (!account.isConnected) {
@@ -16,8 +85,8 @@ const StoreDocument = () => {
             return;
         }
 
-        if (!docHash || !signature) {
-            toast.error("Please enter document hash and signature.");
+        if (!docHash || !tssSignature) {
+            toast.error("Document hash or signautre is not available.");
             return;
         }
 
@@ -32,7 +101,7 @@ const StoreDocument = () => {
             );
 
             // Send transaction
-            const tx = await contract.storeDocument(docHash, signature, merkleRoot || "0x0");
+            const tx = await contract.storeDocument(docHash, tssSignature, merkleRoot || "0x0");
             await tx.wait();
             toast.success("✅ Document stored successfully!");
         } catch (error) {
@@ -51,18 +120,39 @@ const StoreDocument = () => {
                 onChange={(e) => setDocHash(e.target.value)}
                 className="input-container-content"
             />
-            <input
-                type="text"
-                placeholder="Signature"
-                onChange={(e) => setSignature(e.target.value)}
-                className="input-container-content"
-            />
-            <input
-                type="text"
-                placeholder="Merkle Root (Optional)"
-                onChange={(e) => setMerkleRoot(e.target.value)}
-                className="input-container-content"
-            />
+            <button onClick={generateKeyShares} 
+                    className="action-button-list">Generate Key Shares</button>
+                {keyShares.length > 0 && (
+                    <div className="result-box">
+                        <h4>🔹 Key Shares</h4>
+                        {keyShares.map((share, index) => (
+                            <p key={index}>{share}</p>
+                        ))}
+                    </div>
+                )}
+            <button onClick={generatePartialSignatures} className="action-button-list">✍ Generate Partial Signatures</button>
+                {partialSignatures.length > 0 && (
+                    <div className="result-box">
+                        <h4>🔹 Partial Signatures</h4>
+                        {partialSignatures.map((sig, index) => (
+                            <p key={index}>{sig}</p>
+                        ))}
+                    </div>
+                )}
+            <button onClick={generateTSSSignature} className="action-button-list">🔗 Aggregate into TSS Signature</button>
+                {tssSignature && (
+                    <div className="result-box">
+                        <h4>✅ TSS Signature</h4>
+                        <p>{tssSignature}</p>
+                    </div>
+                )}
+            <button onClick={generateMerkleRoot} className="btn">🌳 Generate Merkle Root</button>
+                {merkleRoot && (
+                    <div className="result-box">
+                        <h4>🌳 Merkle Root</h4>
+                        <p>{merkleRoot}</p>
+                    </div>
+                )}
             <button onClick={storeDocument} className="action-button-list">Store Document</button>
         </div>
     </div>

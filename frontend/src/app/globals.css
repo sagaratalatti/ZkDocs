@@ -258,6 +258,17 @@ a:disabled {
   flex-wrap: wrap;
 }
 
+.result-box {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--apkt-border-secondary);
+  border-radius: var(--apkt-border-sm);
+  background: var(--apkt-background-primary);
+  max-width: 600px;
+  word-wrap: break-word;
+  font-size: 12px;
+}
+
 .warning {
   color: var(--apkt-text-secondary);
   font-size: 12px;

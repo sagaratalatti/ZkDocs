@@ -1,4 +1,6 @@
+import CreateDocHash from "@/components/GenerateDocHash"
 import StoreDocument from "@/components/StoreDocument";
+import GetDocument from "@/components/GetDocument";
 import VerifyDocument from "@/components/VerifyDocument";
 import QRCode from "@/components/QRcode";
 import { useState } from "react";
@@ -9,7 +11,9 @@ export default function Home() {
     return (
         <div>
             <h1>zkSync Document Verifier</h1>
+                <CreateDocHash onHashGenerated={setDocHash} />
                 <StoreDocument />
+                <GetDocument />
                 <VerifyDocument />
             <div className="page-container">
                 <h2>QR Code for Verification</h2>
