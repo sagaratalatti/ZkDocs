@@ -3,7 +3,6 @@ import { ethers, keccak256 } from "ethers";
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react' // Import ReOwn AppKit Wallet Hook
 import { toast } from "react-toastify";
 import { MerkleTree } from "merkletreejs";
-import CryptoJS from "crypto-js";
 
 const StoreDocument = () => {
     const account = useAppKitAccount(); // Access ReOwn wallet
@@ -22,10 +21,13 @@ const StoreDocument = () => {
             return;
         }
 
-        let shares: string[] = [];
-        for (let i = 0; i < 3; i++) {
+        let shares: string[] = [
+            keccak256(ethers.toUtf8Bytes("Government")),
+            keccak256(ethers.toUtf8Bytes("Citizen")),
+        ];
+        /* for (let i = 0; i < 3; i++) {
             shares.push(CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex));
-        }
+        } */
 
         setKeyShares(shares);
         toast.success("✅ Key Shares Generated!");
@@ -57,7 +59,7 @@ const StoreDocument = () => {
             ethers.toUtf8Bytes(partialSignatures.join(""))
         );
         setTssSignature(aggregatedSignature);
-        toast.success("✅ Final TSS Signature Generated!");
+        toast.success("✅ Final Signature Generated!");
     };
 
     // Step 4: Generate Merkle Root
@@ -67,11 +69,7 @@ const StoreDocument = () => {
             return;
         }
 
-        const GovernmentAddress = "0x3124475af0ba367fFf33a5DC9BcE78c41f493713";
-        const UniversityAddress = "0xaD1beE8B474644bA41736B6c513f55D800E04e78"
-        const NotaryAddress = "0x78D60191E7EA8FD24196227602CF166e90B98988"
-
-        const attestors = [GovernmentAddress, UniversityAddress, NotaryAddress];
+        const attestors = keyShares;
         const leaves = attestors.map(addr => keccak256(ethers.toUtf8Bytes(addr)));
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const root = "0x" + tree.getRoot().toString("hex");
@@ -142,7 +140,7 @@ const StoreDocument = () => {
             <button onClick={generateTSSSignature} className="action-button-list">🔗 Aggregate into TSS Signature</button>
                 {tssSignature && (
                     <div className="result-box">
-                        <h4>✅ TSS Signature</h4>
+                        <h4>✅ Final Signature</h4>
                         <p>{tssSignature}</p>
                     </div>
                 )}

@@ -76,7 +76,7 @@ const GetDocument = () => {
             {documentData && (
                 <div className="result-box">
                     <h3>📜 Document Details</h3>
-                    <p><strong>🔑 TSS Signature:</strong> {documentData.signature}</p>
+                    <p><strong>🔑 Final Signature:</strong> {documentData.signature}</p>
                     <p><strong>🌳 Merkle Root:</strong> {documentData.merkleRoot}</p>
                     <p><strong>👤 Issuer:</strong> {documentData.issuer}</p>
                     <p><strong>⏳ Timestamp:</strong> {documentData.timestamp}</p>
